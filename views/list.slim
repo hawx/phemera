@@ -1,0 +1,16 @@
+== slim :layout
+  ul.posts
+    - posts.each do |time, body|
+      li == markdown.render body
+
+  footer
+    p
+      | 'phemera is an experiment in forgetful micro-to-macro blogging. Posts
+        disappear after a few days, just as they do on twitter&hellip;
+
+    - if logged_in?
+      a href="/add" Add
+      a href="/logout" Logout
+
+    - else
+      == render_login_button

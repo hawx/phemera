@@ -1,0 +1,4 @@
+db: ./db
+horizon: 248400
+users:
+  - admin@somewhere.com

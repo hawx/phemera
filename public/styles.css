@@ -1,0 +1,56 @@
+@import url(http://fonts.googleapis.com/css?family=Lora);
+
+body {
+    max-width: 505px;
+    margin: 2em;
+    background: #fefefa;
+    color: #1d1d1a;
+
+    font: 21px/1.4 Lora, serif;
+}
+
+.posts {
+    list-style: none;
+    padding: 0;
+}
+
+.posts > li {
+    margin: 2.8em 0;
+}
+
+.posts > li time {
+    font-size: 16px;
+    color: #4c4c4a;
+}
+
+form textarea {
+    font: 21px/1.4 Lora, serif;
+    display: block;
+    border: none;
+    width: 100%;
+
+    margin: 2.8em 0;
+    position: relative;
+    background: transparent;
+    padding: 0;
+
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-sizing: border-box;
+
+    overflow: hidden;
+    resize: none;
+}
+
+form input[type=submit] {
+    /* fancy? */
+}
+
+footer {
+    font-size: 16px;
+    color: #4c4c4a;
+}
+
+footer a {
+    margin-left: 1em;
+}
