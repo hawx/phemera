@@ -1,7 +1,6 @@
 require 'leveldb'
 require 'pathname'
 require 'redcarpet'
-require 'rest-client'
 require 'sinatra'
 require 'slim'
 require 'time'
