@@ -1,24 +1,22 @@
-== slim :layout
-
-  form action="/add" method="post"
-    textarea autofocus="autofocus" type="text" id="body" name="body"
-    input type="submit" value="Add"
+form action="/add" method="post"
+  textarea autofocus="autofocus" type="text" id="body" name="body"
+  input type="submit" value="Add"
 
 
-  script src="/jquery-2.0.3.min.js"
-  script src="/jquery.caret.js"
-  script src="/jquery.autosize.min.js"
+script src="/jquery-2.0.3.min.js"
+script src="/jquery.caret.js"
+script src="/jquery.autosize.min.js"
 
-  script
-    | function scrollToBottom() {
-        var pos = $('textarea').caret('pos');
-        var len = $('textarea').val().length;
+script
+  | function scrollToBottom() {
+      var pos = $('textarea').caret('pos');
+      var len = $('textarea').val().length;
 
-        if (pos === len) {
-          window.scrollTo(0, document.body.scrollHeight);
-        }
+      if (pos === len) {
+        window.scrollTo(0, document.body.scrollHeight);
       }
+    }
 
-      $(function(){
-        $('textarea').autosize({'callback': scrollToBottom});
-      });
+    $(function(){
+      $('textarea').autosize({'callback': scrollToBottom});
+    });

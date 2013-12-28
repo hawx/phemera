@@ -1,14 +1,13 @@
-== slim :layout
-  ul.posts
-    - posts.each do |time, body|
-      li == Markdown.render body
+ul.posts
+  - posts.each do |time, body|
+    li == Markdown.render body
 
-  footer
-    == Markdown.render Settings['footer']
+footer
+  == Markdown.render Settings['footer']
 
-    - if logged_in?
-      a href="/add" Add
-      a href="/logout" Logout
+  - if logged_in?
+    a href="/add" Add
+    a href="/logout" Logout
 
-    - else
-      == render_login_button
+  - else
+    == render_login_button
