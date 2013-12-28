@@ -56,3 +56,14 @@ footer a { color: #1d1d1a; }
 footer > a {
     margin-left: 1em;
 }
+
+
+@media screen and (max-width: 505px) {
+    body {
+        margin: 1em;
+    }
+
+    footer {
+        font-size: 14px;
+    }
+}
