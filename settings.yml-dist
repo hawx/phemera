@@ -1,4 +1,7 @@
 db: ./db
 horizon: 248400
+footer: >
+  ['phemera'](http://github.com/hawx/phemera) is an experiment in forgetful
+  blogging.
 users:
   - admin@somewhere.com

@@ -51,6 +51,8 @@ footer {
     color: #4c4c4a;
 }
 
-footer a {
+footer a { color: #1d1d1a; }
+
+footer > a {
     margin-left: 1em;
 }
