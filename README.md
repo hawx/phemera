@@ -10,7 +10,7 @@ $ cd phemera
 $ mv settings.yml{-dist,}
 ```
 
-Then edit settings.yml so users contains your email address(es).
+Then edit settings.yml so users contains your email address(es), and run.
 
 ``` bash
 $ bundle install

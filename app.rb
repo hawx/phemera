@@ -1,4 +1,5 @@
 require 'leveldb-native'
+require 'nokogiri'
 require 'pathname'
 require 'redcarpet'
 require 'sinatra'
@@ -74,6 +75,27 @@ end
 get '/logout' do
   logout!
   redirect '/'
+end
+
+get '/feed' do
+  content_type 'application/rss+xml'
+
+  Nokogiri::XML::Builder.new {|xml|
+    xml.rss(version: '2.0') {
+      xml.channel {
+        xml.title       'ugh.hawx.me'
+        xml.link        'http://ugh.hawx.me'
+        xml.description 'a forgetful blog'
+
+        posts.each do |time, body|
+          xml.item {
+            xml.description { xml.cdata markdown(body) }
+            xml.pubDate Time.at(time.to_i).strftime("%a, %d %b %Y %H:%M:%S %z")
+          }
+        end
+      }
+    }
+  }.to_xml
 end
 
 error 400..510 do
