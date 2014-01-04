@@ -1,6 +1,8 @@
 ul.posts
   - posts.each do |time, body|
-    li == Markdown.render body
+    li id=time
+      a.link href=("#" + time) &#x2020;
+      == Markdown.render body
 
 footer
   == Markdown.render Settings['footer']

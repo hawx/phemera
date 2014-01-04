@@ -15,12 +15,21 @@ body {
 }
 
 .posts > li {
+    padding-left: 1em;
     margin: 2.8em 0;
+    margin-left: -1em;
 }
 
-.posts > li time {
-    font-size: 16px;
-    color: #4c4c4a;
+.posts > li .link {
+    position: absolute;
+    margin-left: -1em;
+    color: #acacaa;
+    text-decoration: none;
+    opacity: 0;
+}
+
+.posts > li:hover .link {
+    opacity: .99;
 }
 
 form textarea {
