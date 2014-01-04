@@ -28,7 +28,7 @@ body {
     opacity: 0;
 }
 
-.posts > li:hover .link {
+.posts > li:hover .link, .posts > li.highlight .link {
     opacity: .99;
 }
 

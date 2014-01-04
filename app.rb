@@ -1,3 +1,4 @@
+require 'json'
 require 'leveldb-native'
 require 'nokogiri'
 require 'pathname'
@@ -39,7 +40,11 @@ helpers do
   end
 
   def save(time, body)
-    db {|db| db.put time.to_i.to_s, body }
+    unixtime = time.to_i.to_s
+    db {|db| db.put unixtime, body }
+
+    rendered_body = slim :item, locals: {time: unixtime, body: body}
+    notify rendered_body
   end
 
   def posts
@@ -55,10 +60,25 @@ helpers do
     session[:authorize_redirect_url] = request.url
     halt 403 unless logged_in?
   end
+
+  def notify(data)
+    $connections.each {|out|
+      out << "data: #{data}\n\n"
+    }
+  end
 end
+
+$connections = []
 
 get '/' do
   slim :list
+end
+
+get '/connect', provides: 'text/event-stream' do
+  stream(:keep_open) {|out|
+    $connections << out
+    out.callback { $connections.delete(out) }
+  }
 end
 
 before('/add') { logged_in! }

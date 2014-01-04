@@ -1,8 +1,6 @@
 ul.posts
   - posts.each do |time, body|
-    li id=time
-      a.link href=("#" + time) &#x2020;
-      == Markdown.render body
+    == slim :item, locals: {time: time, body: body}
 
 footer
   == Markdown.render Settings['footer']
@@ -13,3 +11,5 @@ footer
 
   - else
     == render_login_button
+
+script src="/list.js"
