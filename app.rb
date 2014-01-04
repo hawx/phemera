@@ -19,7 +19,6 @@ opts = {
   strikethrough: true,
   space_after_headers: true,
   superscript: true,
-  underline: true,
   highlight: true
 }
 
