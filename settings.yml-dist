@@ -1,7 +1,10 @@
-db: ./db
-horizon: 248400
+title: my ugh
+url:   "http://ugh.example.com"
+desc:  a forgetful blog
 footer: >
   ['phemera'](http://github.com/hawx/phemera) is an experiment in forgetful
   blogging.
 users:
-  - admin@somewhere.com
+  - admin@example.com
+db: ./db
+horizon: 248400

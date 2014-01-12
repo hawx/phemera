@@ -61,9 +61,7 @@ helpers do
   end
 
   def notify(data)
-    $connections.each {|out|
-      out << "data: #{data}\n\n"
-    }
+    $connections.each {|out| out << "data: #{data}\n\n" }
   end
 end
 
@@ -98,23 +96,7 @@ end
 
 get '/feed' do
   content_type 'application/rss+xml'
-
-  Nokogiri::XML::Builder.new {|xml|
-    xml.rss(version: '2.0') {
-      xml.channel {
-        xml.title       'ugh.hawx.me'
-        xml.link        'http://ugh.hawx.me'
-        xml.description 'a forgetful blog'
-
-        posts.each do |time, body|
-          xml.item {
-            xml.description { xml.cdata markdown(body) }
-            xml.pubDate Time.at(time.to_i).strftime("%a, %d %b %Y %H:%M:%S %z")
-          }
-        end
-      }
-    }
-  }.to_xml
+  nokogiri :feed
 end
 
 error 400..510 do
