@@ -3,11 +3,11 @@ require 'leveldb-native'
 require 'nokogiri'
 require 'pathname'
 require 'redcarpet'
+require 'rest_client'
 require 'sinatra'
 require 'slim'
 require 'time'
 require 'yaml'
-require_relative 'lib/persona'
 
 
 Settings = YAML.load_file(File.expand_path("../settings.yml", __FILE__))
@@ -52,11 +52,10 @@ helpers do
   end
 
   def logged_in?
-    authorized? && Settings['users'].include?(authorized_email)
+    session[:email] && Settings['users'].include?(session[:email])
   end
 
   def logged_in!
-    session[:authorize_redirect_url] = request.url
     halt 403 unless logged_in?
   end
 
@@ -89,14 +88,35 @@ post '/add' do
   redirect '/'
 end
 
-get '/logout' do
-  logout!
-  redirect '/'
-end
-
 get '/feed' do
   content_type 'application/rss+xml'
   nokogiri :feed
+end
+
+post '/login' do
+  # check assertion with a request to the verifier
+  response = nil
+  if params[:assertion]
+    restclient_url = "https://verifier.login.persona.org/verify"
+    restclient_params = {
+      :assertion => params["assertion"],
+      :audience => "http://localhost:#{request.port}", # use your website's URL here.
+    }
+    response = JSON.parse(RestClient::Resource.new(restclient_url, :verify_ssl => true).post(restclient_params))
+  end
+
+  # create a session if assertion is valid
+  if response["status"] == "okay"
+    session[:email] = response["email"]
+    response.to_json
+  else
+    {:status => "error"}.to_json
+  end
+end
+
+get '/logout' do
+  session[:email] = nil
+  redirect '/'
 end
 
 error 400..510 do
