@@ -1,6 +1,8 @@
 title: my ugh
 url:   "http://ugh.example.com"
 desc:  a forgetful blog
+host:  localhost
+secret: changeThisToARandomString
 footer: >
   ['phemera'](http://github.com/hawx/phemera) is an experiment in forgetful
   blogging.

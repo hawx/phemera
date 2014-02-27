@@ -9,7 +9,6 @@ require 'slim'
 require 'time'
 require 'yaml'
 
-
 Settings = YAML.load_file(File.expand_path("../settings.yml", __FILE__))
 
 opts = {
@@ -29,7 +28,7 @@ smartHtml = Class.new(Redcarpet::Render::HTML) {
 Markdown = Redcarpet::Markdown.new(smartHtml, opts)
 
 enable :sessions
-set :session_secret, 'HGGejnrgjnakrug4873731yhkjgnr'
+set :session_secret, Settings['secret']
 
 helpers do
   def db(&block)
@@ -100,7 +99,7 @@ post '/login' do
     restclient_url = "https://verifier.login.persona.org/verify"
     restclient_params = {
       :assertion => params["assertion"],
-      :audience => "http://localhost:#{request.port}", # use your website's URL here.
+      :audience => "http://#{Settings['host']}:#{request.port}",
     }
     response = JSON.parse(RestClient::Resource.new(restclient_url, :verify_ssl => true).post(restclient_params))
   end
