@@ -58,6 +58,10 @@ helpers do
     halt 403 unless logged_in?
   end
 
+  def csrf_token
+    session[:csrf]
+  end
+
   def notify(data)
     $connections.each {|out| out << "data: #{data}\n\n" }
   end

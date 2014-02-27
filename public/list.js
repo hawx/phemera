@@ -26,7 +26,7 @@ function gotAssertion(assertion) {
         $.ajax({
             type: 'POST',
             url: '/login',
-            data: { assertion: assertion },
+            data: { assertion: assertion, authenticity_token: window.CSRF_TOKEN },
             success: function(res, status, xhr) {
                 window.location.reload();
             },
