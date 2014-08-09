@@ -1,0 +1,8 @@
+title = "my ugh"
+description = "['phemera](http://github.com/hawx/phemera) is an experiment in forgetful blogging."
+url = "http://localhost:8080"
+user = "m@hawx.me"
+secret = "gjkrejkrerejerre"
+audience = "localhost"
+horizon = "-24h"
+db = "/tmp/db"
