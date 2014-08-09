@@ -1,3 +1,2 @@
 db
-settings.yml
-Gemfile.lock
+settings.toml
