@@ -29,7 +29,7 @@ func Open(path, horizon string) Db {
 	db, err := levigo.Open(path, opts)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("db:", err)
 	}
 
 	wo := levigo.NewWriteOptions()

@@ -67,7 +67,7 @@ func main() {
 	flag.Parse()
 
 	if err := config.Parse(*settingsPath); err != nil {
-		log.Fatal(err)
+		log.Fatal("toml:", err)
 	}
 
 	store = cookie.NewStore(*cookieSecret)
@@ -124,7 +124,7 @@ func main() {
 			email, err := persona.Assert(*audience, assertion)
 
 			if err != nil {
-				log.Print(err)
+				log.Print("sign-in:", err)
 				w.WriteHeader(403)
 				return
 			}
