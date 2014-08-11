@@ -24,13 +24,13 @@ var (
 	port         = flag.String("port", "8080", "")
 
 	title        = config.String("title", "'phemera")
-	description  = config.String("description", "this is is is")
+	description  = config.String("description", "['phemera](https://github.com/hawx/phemera) is an experiment in forgetful blogging.")
 	url          = config.String("url", "http://localhost:8080")
 	user         = config.String("user", "someone@example.com")
-	cookieSecret = config.String("secret", "some-secret")
+	cookieSecret = config.String("secret", "some-secret-pls-change")
 	audience     = config.String("audience", "localhost")
-	horizon      = config.String("horizon", "248400s")
-	dbPath       = config.String("db", "./db")
+	horizon      = config.String("horizon", "-248400s")
+	dbPath       = config.String("db", "./phemera-db")
 )
 
 type Context struct {
