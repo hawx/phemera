@@ -64,6 +64,32 @@ func Log(handler http.Handler) http.Handler {
 	})
 }
 
+func Protect(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !LoggedIn(r) {
+			w.WriteHeader(403)
+			return
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
+func Render(templatePath string, db database.Db) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := mustache.RenderFileInLayout(templatePath, "views/layout.mustache", ctx(db, r))
+		w.Header().Add("Content-Type", "text/html")
+		fmt.Fprintf(w, body)
+	})
+}
+
+func Add(db database.Db) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		db.Save(time.Now(), r.PostFormValue("body"))
+		http.Redirect(w, r, "/", 301)
+	})
+}
+
 func main() {
 	flag.Parse()
 
@@ -78,33 +104,9 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.Path("/").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body := mustache.RenderFileInLayout("views/list.mustache", "views/layout.mustache", ctx(db, r))
-
-		w.Header().Add("Content-Type", "text/html")
-		fmt.Fprint(w, body)
-	})
-
-	r.Path("/add").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !LoggedIn(r) {
-			w.WriteHeader(403)
-			return
-		}
-
-		body := mustache.RenderFileInLayout("views/add.mustache", "views/layout.mustache")
-		w.Header().Add("Content-Type", "text/html")
-		fmt.Fprintf(w, body)
-	})
-
-	r.Path("/add").Methods("POST").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !LoggedIn(r) {
-			w.WriteHeader(403)
-			return
-		}
-
-		db.Save(time.Now(), r.PostFormValue("body"))
-		http.Redirect(w, r, "/", 301)
-	})
+	r.Path("/").Methods("GET").Handler(Render("views/list.mustache", db))
+	r.Path("/add").Methods("GET").Handler(Protect(Render("views/add.mustache", db)))
+	r.Path("/add").Methods("POST").Handler(Protect(Add(db)))
 
 	r.Path("/feed").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body := mustache.RenderFile("views/feed.mustache", ctx(db, r))
