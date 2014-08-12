@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	clear "github.com/gorilla/context"
+	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 	"github.com/hawx/phemera/cookie"
 	database "github.com/hawx/phemera/db"
 	"github.com/hawx/phemera/markdown"
@@ -75,54 +76,49 @@ func main() {
 	db := database.Open(*dbPath, *horizon)
 	defer db.Close()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			body := mustache.RenderFileInLayout("views/list.mustache", "views/layout.mustache", ctx(db, r))
+	r := mux.NewRouter()
 
-			w.Header().Add("Content-Type", "text/html")
-			fmt.Fprint(w, body)
-		}
+	r.Path("/").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := mustache.RenderFileInLayout("views/list.mustache", "views/layout.mustache", ctx(db, r))
+
+		w.Header().Add("Content-Type", "text/html")
+		fmt.Fprint(w, body)
 	})
 
-	http.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			if !LoggedIn(r) {
-				w.WriteHeader(403)
-				return
-			}
-
-			body := mustache.RenderFileInLayout("views/add.mustache", "views/layout.mustache")
-			w.Header().Add("Content-Type", "text/html")
-			fmt.Fprintf(w, body)
+	r.Path("/add").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !LoggedIn(r) {
+			w.WriteHeader(403)
 			return
 		}
 
-		if r.Method == "POST" {
-			if !LoggedIn(r) {
-				w.WriteHeader(403)
-				return
-			}
+		body := mustache.RenderFileInLayout("views/add.mustache", "views/layout.mustache")
+		w.Header().Add("Content-Type", "text/html")
+		fmt.Fprintf(w, body)
+	})
 
-			db.Save(time.Now(), r.PostFormValue("body"))
-			http.Redirect(w, r, "/", 301)
+	r.Path("/add").Methods("POST").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !LoggedIn(r) {
+			w.WriteHeader(403)
 			return
 		}
+
+		db.Save(time.Now(), r.PostFormValue("body"))
+		http.Redirect(w, r, "/", 301)
 	})
 
-	http.HandleFunc("/feed", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			body := mustache.RenderFile("views/feed.mustache", ctx(db, r))
+	r.Path("/feed").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := mustache.RenderFile("views/feed.mustache", ctx(db, r))
 
-			w.Header().Add("Content-Type", "application/rss+xml")
-			fmt.Fprintf(w, body)
-		}
+		w.Header().Add("Content-Type", "application/rss+xml")
+		fmt.Fprintf(w, body)
 	})
 
-	http.Handle("/sign-in", persona.SignIn(store, *audience))
-	http.Handle("/sign-out", persona.SignOut(store))
+	r.Path("/sign-in").Methods("POST").Handler(persona.SignIn(store, *audience))
+	r.Path("/sign-out").Methods("GET").Handler(persona.SignOut(store))
 
+	http.Handle("/", r)
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(*assetDir))))
 
 	log.Print("Running on :" + *port)
-	log.Fatal(http.ListenAndServe(":"+*port, clear.ClearHandler(Log(http.DefaultServeMux))))
+	log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
 }
