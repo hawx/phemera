@@ -1,10 +1,11 @@
 package db
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/boltdb/bolt"
 	"github.com/hawx/phemera/models"
-	"github.com/jmhodges/levigo"
 	"log"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -15,58 +16,62 @@ type Db interface {
 	Close()
 }
 
-type LevelDb struct {
-	me      *levigo.DB
-	wo      *levigo.WriteOptions
-	ro      *levigo.ReadOptions
+type BoltDb struct {
+	me      *bolt.DB
 	horizon time.Duration
 }
 
-func Open(path, horizon string) Db {
-	opts := levigo.NewOptions()
-	opts.SetCache(levigo.NewLRUCache(3 << 30))
-	opts.SetCreateIfMissing(true)
-	db, err := levigo.Open(path, opts)
+const bucketName = "phemera"
 
+func Open(path, horizon string) Db {
+	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
-		log.Fatal("db:", err)
+		log.Fatal(err)
 	}
 
-	wo := levigo.NewWriteOptions()
-
-	ro := levigo.NewReadOptions()
-	ro.SetFillCache(false)
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucket([]byte(bucketName))
+		if err != nil {
+			return fmt.Errorf("create bucket: %s", err)
+		}
+		return nil
+	})
 
 	ho, _ := time.ParseDuration(horizon)
 
-	return LevelDb{db, wo, ro, ho}
+	return BoltDb{db, ho}
+}
+
+func (db BoltDb) Get() models.Entries {
+	list := models.Entries{}
+
+	db.me.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		c := b.Cursor()
+
+		bound := timestamp(time.Now().Add(db.horizon))
+		for k, v := c.Last(); k != nil && bytes.Compare(k, bound) >= 0; k, v = c.Prev() {
+			list = append(list, models.Entry{string(k), string(v)})
+		}
+
+		return nil
+	})
+
+	return list
+}
+
+func (db BoltDb) Save(key time.Time, value string) {
+	db.me.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		err := b.Put([]byte(timestamp(key)), []byte(value))
+		return err
+	})
+}
+
+func (db BoltDb) Close() {
+	db.me.Close()
 }
 
 func timestamp(t time.Time) []byte {
 	return []byte(strconv.FormatInt(t.Unix(), 10))
-}
-
-func (db LevelDb) Get() models.Entries {
-	it := db.me.NewIterator(db.ro)
-	defer it.Close()
-
-	it.Seek(timestamp(time.Now().Add(db.horizon)))
-
-	list := models.Entries{}
-	for it = it; it.Valid(); it.Next() {
-		list = append(list, models.Entry{string(it.Key()), string(it.Value())})
-	}
-
-	sort.Sort(sort.Reverse(list))
-	return list
-}
-
-func (db LevelDb) Save(t time.Time, body string) {
-	db.me.Put(db.wo, []byte(timestamp(t)), []byte(body))
-}
-
-func (db LevelDb) Close() {
-	db.me.Close()
-	db.wo.Close()
-	db.ro.Close()
 }

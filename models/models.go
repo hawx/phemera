@@ -8,18 +8,6 @@ import (
 
 type Entries []Entry
 
-func (l Entries) Len() int {
-	return len(l)
-}
-
-func (l Entries) Less(i, j int) bool {
-	return l[i].Time < l[j].Time
-}
-
-func (l Entries) Swap(i, j int) {
-	l[i], l[j] = l[j], l[i]
-}
-
 type Entry struct {
 	Time string
 	Body string
