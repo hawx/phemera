@@ -118,28 +118,8 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/sign-in", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "POST" {
-			assertion := r.PostFormValue("assertion")
-			email, err := persona.Assert(*audience, assertion)
-
-			if err != nil {
-				log.Print("sign-in:", err)
-				w.WriteHeader(403)
-				return
-			}
-
-			store.Set(email, w, r)
-			w.WriteHeader(200)
-		}
-	})
-
-	http.HandleFunc("/sign-out", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			store.Set("-", w, r)
-			http.Redirect(w, r, "/", 307)
-		}
-	})
+	http.Handle("/sign-in", persona.SignIn(store, *audience))
+	http.Handle("/sign-out", persona.SignOut(store))
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(*assetDir))))
 
