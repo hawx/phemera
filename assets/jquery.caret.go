@@ -1,5 +1,6 @@
-//@ sourceMappingURL=jquery.caret.map
-/*
+package assets
+
+const Caret = `/*
   Implement Github like autocomplete mentions
   http://ichord.github.com/At.js
 
@@ -207,7 +208,7 @@
         var $inputor, at_rect, format, html, mirror, start_range;
         $inputor = this.$inputor;
         format = function(value) {
-          return value.replace(/</g, '&lt').replace(/>/g, '&gt').replace(/`/g, '&#96').replace(/"/g, '&quot').replace(/\r\n|\r|\n/g, "<br />");
+          return value.replace(/</g, '&lt').replace(/>/g, '&gt').replace(/`+"`"+`/g, '&#96').replace(/"/g, '&quot').replace(/\r\n|\r|\n/g, "<br />");
         };
         if (pos === void 0) {
           pos = this.getPos();
@@ -330,4 +331,4 @@
     return $.fn.caret.apis = methods;
   });
 
-}).call(this);
+}).call(this);`

@@ -1,9 +1,11 @@
-<form action="/add" method="post">
+package views
+
+const add = `<form action="/add" method="post">
   <textarea autofocus="autofocus" id="body" name="body"></textarea>
   <input type="submit" value="Add" />
 </form>
 
-<script src="/assets/jquery-2.0.3.min.js"></script>
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="/assets/jquery.caret.js"></script>
 <script src="/assets/jquery.autosize.min.js"></script>
 
@@ -20,4 +22,4 @@ function scrollToBottom() {
 $(function(){
   $('textarea').autosize({'callback': scrollToBottom});
 });
-</script>
+</script>`

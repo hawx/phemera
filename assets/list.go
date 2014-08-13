@@ -1,30 +1,6 @@
-<ul class="posts">
-  {{#Entries}}
-    <li id="{{Time}}">
-      <a class="link" href="#{{Time}}">&#x2020;</a>
-      {{{Rendered}}}
-    </li>
-  {{/Entries}}
-</ul>
+package assets
 
-<footer>
-  {{{Description}}}
-
-  {{#LoggedIn}}
-    <a href="/add">Add</a>
-    <a href="/sign-out">Sign-out</a>
-  {{/LoggedIn}}
-
-  {{^LoggedIn}}
-    <a id="browserid" href="#" title="Sign-in with Persona">Sign-in</a>
-  {{/LoggedIn}}
-</footer>
-
-<script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
-<script src="https://login.persona.org/include.js"></script>
-
-<script>
-function highlight() {
+const List = `function highlight() {
     var els = document.getElementsByClassName("highlight");
     Array.prototype.forEach.call(els, function(el) {
         el.setAttribute("class", "");
@@ -37,18 +13,27 @@ function highlight() {
     }
 }
 
+function connect() {
+    var es = new EventSource('/connect');
+
+    es.onmessage = function(e) {
+        var ul = document.getElementsByClassName("posts")[0];
+        ul.innerHTML = e.data + ul.innerHTML;
+    }
+}
+
 function gotAssertion(assertion) {
     // got an assertion, now send it up to the server for verification
     if (assertion !== null) {
         $.ajax({
             type: 'POST',
-            url: '/sign-in',
-            data: { assertion: assertion },
+            url: '/login',
+            data: { assertion: assertion, authenticity_token: window.CSRF_TOKEN },
             success: function(res, status, xhr) {
                 window.location.reload();
             },
             error: function(xhr, status, res) {
-                alert("sign-in failure" + res);
+                alert("login failure" + res);
             }
         });
     }
@@ -60,6 +45,7 @@ jQuery(function($) {
     });
 
     highlight();
+    connect();
+
     window.onhashchange = highlight;
-});
-</script>
+});`

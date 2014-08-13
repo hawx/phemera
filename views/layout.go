@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+package views
+
+const layout = `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -10,4 +12,4 @@
   <body>
     {{{content}}}
   </body>
-</html>
+</html>`

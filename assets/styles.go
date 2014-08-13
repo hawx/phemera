@@ -1,4 +1,6 @@
-@import url(http://fonts.googleapis.com/css?family=Lora);
+package assets
+
+const Styles = `@import url(http://fonts.googleapis.com/css?family=Lora);
 
 body {
     max-width: 505px;
@@ -66,7 +68,6 @@ footer > a {
     margin-left: 1em;
 }
 
-
 @media screen and (max-width: 505px) {
     body {
         margin: 1em;
@@ -75,4 +76,4 @@ footer > a {
     footer {
         font-size: 14px;
     }
-}
+}`

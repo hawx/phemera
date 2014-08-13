@@ -13,8 +13,31 @@ func SignOut(store emailStore) signOutHandler {
 	return signOutHandler{store}
 }
 
+func isSignedIn(toCheck string, users []string) bool {
+	for _, user := range users {
+		if user == toCheck {
+			return true
+		}
+	}
+	return false
+}
+
+func Protector(store emailStore, users []string) func(http.Handler) http.Handler {
+	return func(handler http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !isSignedIn(store.Get(r), users) {
+				w.WriteHeader(403)
+				return
+			}
+
+			handler.ServeHTTP(w, r)
+		})
+	}
+}
+
 type emailStore interface {
 	Set(email string, w http.ResponseWriter, r *http.Request)
+	Get(r *http.Request) string
 }
 
 type signInHandler struct {

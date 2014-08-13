@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/hawx/phemera/assets"
 	"github.com/hawx/phemera/cookie"
 	database "github.com/hawx/phemera/db"
 	"github.com/hawx/phemera/markdown"
 	"github.com/hawx/phemera/models"
 	"github.com/hawx/phemera/persona"
+	"github.com/hawx/phemera/views"
 	"github.com/hoisie/mustache"
 	"github.com/stvp/go-toml-config"
 	"log"
@@ -64,20 +66,9 @@ func Log(handler http.Handler) http.Handler {
 	})
 }
 
-func Protect(handler http.Handler) http.Handler {
+func Render(template *mustache.Template, db database.Db) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !LoggedIn(r) {
-			w.WriteHeader(403)
-			return
-		}
-
-		handler.ServeHTTP(w, r)
-	})
-}
-
-func Render(templatePath string, db database.Db) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body := mustache.RenderFileInLayout(templatePath, "views/layout.mustache", ctx(db, r))
+		body := template.RenderInLayout(views.Layout, ctx(db, r))
 		w.Header().Add("Content-Type", "text/html")
 		fmt.Fprintf(w, body)
 	})
@@ -104,12 +95,14 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.Path("/").Methods("GET").Handler(Render("views/list.mustache", db))
-	r.Path("/add").Methods("GET").Handler(Protect(Render("views/add.mustache", db)))
-	r.Path("/add").Methods("POST").Handler(Protect(Add(db)))
+	protect := persona.Protector(store, []string{*user})
+
+	r.Path("/").Methods("GET").Handler(Render(views.List, db))
+	r.Path("/add").Methods("GET").Handler(protect(Render(views.Add, db)))
+	r.Path("/add").Methods("POST").Handler(protect(Add(db)))
 
 	r.Path("/feed").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body := mustache.RenderFile("views/feed.mustache", ctx(db, r))
+		body := views.Feed.Render(ctx(db, r))
 
 		w.Header().Add("Content-Type", "application/rss+xml")
 		fmt.Fprintf(w, body)
@@ -119,7 +112,12 @@ func main() {
 	r.Path("/sign-out").Methods("GET").Handler(persona.SignOut(store))
 
 	http.Handle("/", r)
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(*assetDir))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", assets.Server(map[string]string{
+		"jquery.caret.js":        assets.Caret,
+		"jquery.autosize.min.js": assets.AutoSize,
+		"styles.css":             assets.Styles,
+		"list.js":                assets.List,
+	})))
 
 	log.Print("Running on :" + *port)
 	log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
