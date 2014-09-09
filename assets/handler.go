@@ -18,7 +18,6 @@ type assetServer struct {
 func (s assetServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if v := s.assetMap[r.URL.Path]; v != "" {
 		http.ServeContent(w, r, r.URL.Path, s.createdAt, strings.NewReader(v))
-		w.WriteHeader(200)
 		return
 	}
 

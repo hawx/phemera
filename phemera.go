@@ -22,7 +22,6 @@ import (
 var store cookie.Store
 
 var (
-	assetDir     = flag.String("assets", "./assets", "")
 	settingsPath = flag.String("settings", "./settings.toml", "")
 	port         = flag.String("port", "8080", "")
 
@@ -42,6 +41,7 @@ type Context struct {
 
 	Title       string
 	Description string
+	SafeDesc    string
 	Url         string
 }
 
@@ -51,6 +51,7 @@ func ctx(db database.Db, r *http.Request) Context {
 		LoggedIn:    LoggedIn(r),
 		Title:       *title,
 		Description: markdown.Render(*description),
+	  SafeDesc:    *description,
 		Url:         *url,
 	}
 }

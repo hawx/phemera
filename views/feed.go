@@ -5,12 +5,13 @@ const feed = `<?xml version="1.0"?>
   <channel>
     <title>{{Title}}</title>
     <link>{{Url}}</link>
-    <description><![CDATA[{{{Description}}}]]></description>
+    <description>{{SafeDesc}}</description>
 
     {{#Entries}}
       <item>
         <description><![CDATA[{{{Rendered}}}]]></description>
         <pubDate>{{RssTime}}</pubDate>
+        <link>{{Url}}#{{Time}}</link>
       </item>
     {{/Entries}}
   </channel>
