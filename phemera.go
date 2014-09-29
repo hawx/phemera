@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/hawx/phemera/assets"
@@ -14,7 +12,11 @@ import (
 	"github.com/hawx/phemera/views"
 	"github.com/hoisie/mustache"
 	"github.com/stvp/go-toml-config"
+
+	"flag"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -24,6 +26,7 @@ var store cookie.Store
 var (
 	settingsPath = flag.String("settings", "./settings.toml", "")
 	port         = flag.String("port", "8080", "")
+	socket       = flag.String("socket", "", "")
 
 	title        = config.String("title", "'phemera")
 	description  = config.String("description", "['phemera](https://github.com/hawx/phemera) is an experiment in forgetful blogging.")
@@ -51,7 +54,7 @@ func ctx(db database.Db, r *http.Request) Context {
 		LoggedIn:    LoggedIn(r),
 		Title:       *title,
 		Description: markdown.Render(*description),
-	  SafeDesc:    *description,
+		SafeDesc:    *description,
 		Url:         *url,
 	}
 }
@@ -120,6 +123,16 @@ func main() {
 		"list.js":                assets.List,
 	})))
 
-	log.Print("Running on :" + *port)
-	log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
+	if *socket == "" {
+		log.Print("Running on :" + *port)
+		log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
+	} else {
+		l, err := net.Listen("unix", *socket)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("listening on", *socket)
+		log.Fatal(http.Serve(l, context.ClearHandler(Log(http.DefaultServeMux))))
+	}
 }
