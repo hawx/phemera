@@ -18,6 +18,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 )
 
@@ -124,15 +126,28 @@ func main() {
 	})))
 
 	if *socket == "" {
-		log.Print("Running on :" + *port)
-		log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
+		go func() {
+			log.Print("listening on :" + *port)
+			log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
+		}()
+
 	} else {
 		l, err := net.Listen("unix", *socket)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		log.Println("listening on", *socket)
-		log.Fatal(http.Serve(l, context.ClearHandler(Log(http.DefaultServeMux))))
+		defer l.Close()
+
+		go func() {
+			log.Println("listening on", *socket)
+			log.Fatal(http.Serve(l, context.ClearHandler(Log(http.DefaultServeMux))))
+		}()
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+
+	s := <-c
+	log.Printf("caught %s: shutting down", s)
 }
