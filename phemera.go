@@ -87,6 +87,11 @@ func Add(db database.Db) http.Handler {
 	})
 }
 
+var Preview = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/html")
+	markdown.RenderTo(r.Body, w)
+})
+
 func main() {
 	flag.Parse()
 
@@ -106,6 +111,7 @@ func main() {
 	r.Path("/").Methods("GET").Handler(Render(views.List, db))
 	r.Path("/add").Methods("GET").Handler(protect(Render(views.Add, db)))
 	r.Path("/add").Methods("POST").Handler(protect(Add(db)))
+	r.Path("/preview").Methods("POST").Handler(protect(Preview))
 
 	r.Path("/feed").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body := views.Feed.Render(ctx(db, r))

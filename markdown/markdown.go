@@ -2,6 +2,9 @@ package markdown
 
 import (
 	"github.com/russross/blackfriday"
+
+	"io/ioutil"
+	"io"
 )
 
 func Render(text string) string {
@@ -17,4 +20,9 @@ func Render(text string) string {
 		blackfriday.EXTENSION_SPACE_HEADERS
 
 	return string(blackfriday.Markdown([]byte(text), renderer, extensions))
+}
+
+func RenderTo(r io.Reader, w io.Writer) {
+	text, _ := ioutil.ReadAll(r)
+	io.WriteString(w, Render(string(text)))
 }

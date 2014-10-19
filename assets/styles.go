@@ -3,7 +3,7 @@ package assets
 const Styles = `@import url(http://fonts.googleapis.com/css?family=Lora);
 
 body {
-    max-width: 505px;
+    max-width: 24em;
     margin: 2em;
     background: #fefefa;
     color: #1d1d1a;
@@ -57,6 +57,14 @@ form input[type=submit] {
     /* fancy? */
 }
 
+#preview {
+    position: absolute;
+    top: 2em;
+    left: 28em;
+    opacity: .7;
+    width: 24em;
+}
+
 footer {
     font-size: 16px;
     color: #4c4c4a;
@@ -68,7 +76,7 @@ footer > a {
     margin-left: 1em;
 }
 
-@media screen and (max-width: 505px) {
+@media screen and (max-width: 30em) {
     body {
         margin: 1em;
     }
@@ -76,4 +84,8 @@ footer > a {
     footer {
         font-size: 14px;
     }
+}
+
+@media screen and (max-width: 72em) {
+    #preview, #preview-btn { display: none; }
 }`
