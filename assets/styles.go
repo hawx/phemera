@@ -1,6 +1,6 @@
 package assets
 
-const Styles = `@import url(http://fonts.googleapis.com/css?family=Lora);
+const Styles = `@import url(http://fonts.googleapis.com/css?family=Lora:400,400italic,700);
 
 body {
     max-width: 24em;
@@ -9,6 +9,21 @@ body {
     color: #1d1d1a;
 
     font: 21px/1.4 Lora, serif;
+}
+
+blockquote {
+    font-style: italic;
+    margin-left: 1em;
+    color: #222;
+}
+
+code {
+    font-size: 0.9em;
+    color: #211;
+}
+
+pre code {
+    background: transparent;
 }
 
 .posts {
