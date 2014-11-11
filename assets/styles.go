@@ -26,6 +26,19 @@ pre code {
     background: transparent;
 }
 
+p {
+    -ms-word-break: break-all;
+    word-break: break-all;
+
+    /* Non standard for webkit */
+    word-break: break-word;
+
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+}
+
 .posts {
     list-style: none;
     padding: 0;
