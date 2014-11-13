@@ -49,7 +49,7 @@ p {
     margin-left: -1em;
     color: #acacaa;
     text-decoration: none;
-    opacity: 0;
+    opacity: .5;
 }
 
 .posts > li:hover .link, .posts > li.highlight .link {
