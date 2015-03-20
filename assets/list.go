@@ -27,7 +27,7 @@ function gotAssertion(assertion) {
     if (assertion !== null) {
         $.ajax({
             type: 'POST',
-            url: '/login',
+            url: '/sign-in',
             data: { assertion: assertion, authenticity_token: window.CSRF_TOKEN },
             success: function(res, status, xhr) {
                 window.location.reload();
@@ -39,7 +39,7 @@ function gotAssertion(assertion) {
     }
 };
 
-jQuery(function($) {
+$(function($) {
     $('#browserid').click(function() {
         navigator.id.get(gotAssertion);
     });

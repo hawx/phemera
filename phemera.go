@@ -1,29 +1,24 @@
 package main
 
 import (
-	"github.com/gorilla/context"
-	"github.com/gorilla/mux"
-	"github.com/hawx/phemera/assets"
-	"github.com/hawx/phemera/cookie"
-	database "github.com/hawx/phemera/db"
-	"github.com/hawx/phemera/markdown"
-	"github.com/hawx/phemera/models"
-	"github.com/hawx/phemera/persona"
-	"github.com/hawx/phemera/views"
-	"github.com/hoisie/mustache"
-	"github.com/stvp/go-toml-config"
-
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"os"
-	"os/signal"
 	"time"
-)
 
-var store cookie.Store
+	"github.com/antage/eventsource"
+	"github.com/hawx/mux"
+	"github.com/hawx/persona"
+	"github.com/hawx/serve"
+	"github.com/stvp/go-toml-config"
+
+	"github.com/hawx/phemera/assets"
+	database "github.com/hawx/phemera/db"
+	"github.com/hawx/phemera/markdown"
+	"github.com/hawx/phemera/models"
+	"github.com/hawx/phemera/views"
+)
 
 var (
 	settingsPath = flag.String("settings", "./settings.toml", "")
@@ -50,19 +45,15 @@ type Context struct {
 	Url         string
 }
 
-func ctx(db database.Db, r *http.Request) Context {
+func ctx(db database.Db, r *http.Request, loggedIn bool) Context {
 	return Context{
 		Entries:     db.Get(),
-		LoggedIn:    LoggedIn(r),
+		LoggedIn:    loggedIn,
 		Title:       *title,
 		Description: markdown.Render(*description),
 		SafeDesc:    *description,
 		Url:         *url,
 	}
-}
-
-func LoggedIn(r *http.Request) bool {
-	return store.Get(r) == *user
 }
 
 func Log(handler http.Handler) http.Handler {
@@ -72,25 +63,48 @@ func Log(handler http.Handler) http.Handler {
 	})
 }
 
-func Render(template *mustache.Template, db database.Db) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body := template.RenderInLayout(views.Layout, ctx(db, r))
+func List(db database.Db, loggedIn bool) http.Handler {
+	return mux.Method{
+		"GET": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body := views.List.RenderInLayout(views.Layout, ctx(db, r, loggedIn))
+			w.Header().Add("Content-Type", "text/html")
+			fmt.Fprintf(w, body)
+		}),
+	}
+}
+
+func Add(db database.Db, es eventsource.EventSource) http.Handler {
+	return mux.Method{
+		"GET": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body := views.Add.RenderInLayout(views.Layout, ctx(db, r, true))
+			w.Header().Add("Content-Type", "text/html")
+			fmt.Fprintf(w, body)
+		}),
+		"POST": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			db.Save(time.Now(), r.PostFormValue("body"))
+			es.SendEventMessage(r.PostFormValue("body"), "add-post", "")
+			http.Redirect(w, r, "/", 301)
+		}),
+	}
+}
+
+var Preview = mux.Method{
+	"POST": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
-		fmt.Fprintf(w, body)
-	})
+		markdown.RenderTo(r.Body, w)
+	}),
 }
 
-func Add(db database.Db) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		db.Save(time.Now(), r.PostFormValue("body"))
-		http.Redirect(w, r, "/", 301)
-	})
-}
+func Feed(db database.Db) http.Handler {
+	return mux.Method{
+		"GET": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body := views.Feed.Render(ctx(db, r, false))
 
-var Preview = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/html")
-	markdown.RenderTo(r.Body, w)
-})
+			w.Header().Add("Content-Type", "application/rss+xml")
+			fmt.Fprintf(w, body)
+		}),
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -99,31 +113,24 @@ func main() {
 		log.Fatal("toml:", err)
 	}
 
-	store = cookie.NewStore(*cookieSecret)
-
 	db := database.Open(*dbPath, *horizon)
 	defer db.Close()
 
-	r := mux.NewRouter()
+	es := eventsource.New(nil, nil)
+	defer es.Close()
 
-	protect := persona.Protector(store, []string{*user})
+	store := persona.NewStore(*cookieSecret)
+	persona := persona.New(store, *audience, []string{*user})
 
-	r.Path("/").Methods("GET").Handler(Render(views.List, db))
-	r.Path("/add").Methods("GET").Handler(protect(Render(views.Add, db)))
-	r.Path("/add").Methods("POST").Handler(protect(Add(db)))
-	r.Path("/preview").Methods("POST").Handler(protect(Preview))
+	http.Handle("/", persona.Switch(List(db, true), List(db, false)))
+	http.Handle("/add", persona.Protect(Add(db, es)))
+	http.Handle("/preview", persona.Protect(Preview))
+	http.Handle("/feed", Feed(db))
+	http.Handle("/connect", es)
 
-	r.Path("/feed").Methods("GET").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body := views.Feed.Render(ctx(db, r))
+	http.Handle("/sign-in", mux.Method{"POST": persona.SignIn})
+	http.Handle("/sign-out", mux.Method{"GET": persona.SignOut})
 
-		w.Header().Add("Content-Type", "application/rss+xml")
-		fmt.Fprintf(w, body)
-	})
-
-	r.Path("/sign-in").Methods("POST").Handler(persona.SignIn(store, *audience))
-	r.Path("/sign-out").Methods("GET").Handler(persona.SignOut(store))
-
-	http.Handle("/", r)
 	http.Handle("/assets/", http.StripPrefix("/assets/", assets.Server(map[string]string{
 		"jquery.caret.js":        assets.Caret,
 		"jquery.autosize.min.js": assets.AutoSize,
@@ -131,29 +138,5 @@ func main() {
 		"list.js":                assets.List,
 	})))
 
-	if *socket == "" {
-		go func() {
-			log.Print("listening on :" + *port)
-			log.Fatal(http.ListenAndServe(":"+*port, context.ClearHandler(Log(http.DefaultServeMux))))
-		}()
-
-	} else {
-		l, err := net.Listen("unix", *socket)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		defer l.Close()
-
-		go func() {
-			log.Println("listening on", *socket)
-			log.Fatal(http.Serve(l, context.ClearHandler(Log(http.DefaultServeMux))))
-		}()
-	}
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill)
-
-	s := <-c
-	log.Printf("caught %s: shutting down", s)
+	serve.Serve(*port, *socket, Log(http.DefaultServeMux))
 }
