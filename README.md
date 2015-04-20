@@ -5,9 +5,9 @@ features, because when you can't see things that were written a few days ago why
 would you need them?
 
 ``` bash
-$ git clone https://github.com/hawx/phemera
-$ cd phemera
-$ mv settings.toml.dist settings.toml
-$ go build
-$ ./phemera
+$ go get hawx.me/code/phemera
+$ cat > settings.toml
+user = "john@doe.com"
+$ phemera --settings settings.toml
+...
 ```

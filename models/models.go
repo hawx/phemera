@@ -1,9 +1,10 @@
 package models
 
 import (
-	"github.com/hawx/phemera/markdown"
 	"strconv"
 	"time"
+
+	"hawx.me/code/phemera/markdown"
 )
 
 type Entries []Entry

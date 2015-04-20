@@ -13,11 +13,11 @@ import (
 	"github.com/hawx/serve"
 	"github.com/stvp/go-toml-config"
 
-	"github.com/hawx/phemera/assets"
-	database "github.com/hawx/phemera/db"
-	"github.com/hawx/phemera/markdown"
-	"github.com/hawx/phemera/models"
-	"github.com/hawx/phemera/views"
+	"hawx.me/code/phemera/assets"
+	database "hawx.me/code/phemera/db"
+	"hawx.me/code/phemera/markdown"
+	"hawx.me/code/phemera/models"
+	"hawx.me/code/phemera/views"
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 	socket       = flag.String("socket", "", "")
 
 	title        = config.String("title", "'phemera")
-	description  = config.String("description", "['phemera](https://github.com/hawx/phemera) is an experiment in forgetful blogging.")
+	description  = config.String("description", "['phemera](https://hawx.me/code/phemera) is an experiment in forgetful blogging.")
 	url          = config.String("url", "http://localhost:8080")
 	user         = config.String("user", "someone@example.com")
 	cookieSecret = config.String("secret", "some-secret-pls-change")
