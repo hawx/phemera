@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/antage/eventsource"
-	"github.com/hawx/persona"
-	"github.com/hawx/serve"
 	"github.com/stvp/go-toml-config"
 	"hawx.me/code/mux"
+	"hawx.me/code/persona"
+	"hawx.me/code/serve"
 
 	"hawx.me/code/phemera/assets"
 	database "hawx.me/code/phemera/db"
