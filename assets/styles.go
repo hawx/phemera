@@ -1,6 +1,6 @@
 package assets
 
-const Styles = `@import url(http://fonts.googleapis.com/css?family=Lora:400,400italic,700);
+const Styles = `@import url(//fonts.googleapis.com/css?family=Lora:400,400italic,700);
 
 body {
     max-width: 24em;

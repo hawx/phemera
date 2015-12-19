@@ -8,7 +8,7 @@ const add = `<form action="/add" method="post">
 
 <div id="preview"></div>
 
-<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="/assets/jquery.caret.js"></script>
 <script src="/assets/jquery.autosize.min.js"></script>
 
