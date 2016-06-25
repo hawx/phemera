@@ -18,10 +18,8 @@ const list = `<ul class="posts">
   {{/LoggedIn}}
 
   {{^LoggedIn}}
-    <a id="browserid" href="#" title="Sign-in with Persona">Sign-in</a>
+    <a href="/sign-in">Sign-in</a>
   {{/LoggedIn}}
 </footer>
 
-<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
-<script src="https://login.persona.org/include.js"></script>
 <script src="/assets/list.js"></script>`

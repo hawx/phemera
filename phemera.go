@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/antage/eventsource"
-	"github.com/stvp/go-toml-config"
 	"hawx.me/code/mux"
-	"hawx.me/code/persona"
 	"hawx.me/code/serve"
+	"hawx.me/code/uberich"
 
 	"hawx.me/code/phemera/assets"
 	database "hawx.me/code/phemera/db"
@@ -20,20 +20,21 @@ import (
 	"hawx.me/code/phemera/views"
 )
 
-var (
-	settingsPath = flag.String("settings", "./settings.toml", "")
-	port         = flag.String("port", "8080", "")
-	socket       = flag.String("socket", "", "")
+type Conf struct {
+	Title       string
+	Description string
+	URL         string
+	Secret      string
+	Horizon     string
+	DbPath      string
 
-	title        = config.String("title", "'phemera")
-	description  = config.String("description", "['phemera](https://hawx.me/code/phemera) is an experiment in forgetful blogging.")
-	url          = config.String("url", "http://localhost:8080")
-	user         = config.String("user", "someone@example.com")
-	cookieSecret = config.String("secret", "some-secret-pls-change")
-	audience     = config.String("audience", "localhost")
-	horizon      = config.String("horizon", "-248400s")
-	dbPath       = config.String("db", "./phemera-db")
-)
+	Uberich struct {
+		AppName    string
+		AppURL     string
+		UberichURL string
+		Secret     string
+	}
+}
 
 type Context struct {
 	Entries  models.Entries
@@ -45,14 +46,14 @@ type Context struct {
 	Url         string
 }
 
-func ctx(db database.Db, r *http.Request, loggedIn bool) Context {
+func ctx(conf *Conf, db database.Db, r *http.Request, loggedIn bool) Context {
 	return Context{
 		Entries:     db.Get(),
 		LoggedIn:    loggedIn,
-		Title:       *title,
-		Description: markdown.Render(*description),
-		SafeDesc:    *description,
-		Url:         *url,
+		Title:       conf.Title,
+		Description: markdown.Render(conf.Description),
+		SafeDesc:    conf.Description,
+		Url:         conf.URL,
 	}
 }
 
@@ -63,20 +64,20 @@ func Log(handler http.Handler) http.Handler {
 	})
 }
 
-func List(db database.Db, loggedIn bool) http.Handler {
+func List(conf *Conf, db database.Db, loggedIn bool) http.Handler {
 	return mux.Method{
 		"GET": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			body := views.List.RenderInLayout(views.Layout, ctx(db, r, loggedIn))
+			body := views.List.RenderInLayout(views.Layout, ctx(conf, db, r, loggedIn))
 			w.Header().Add("Content-Type", "text/html")
 			fmt.Fprintf(w, body)
 		}),
 	}
 }
 
-func Add(db database.Db, es eventsource.EventSource) http.Handler {
+func Add(conf *Conf, db database.Db, es eventsource.EventSource) http.Handler {
 	return mux.Method{
 		"GET": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			body := views.Add.RenderInLayout(views.Layout, ctx(db, r, true))
+			body := views.Add.RenderInLayout(views.Layout, ctx(conf, db, r, true))
 			w.Header().Add("Content-Type", "text/html")
 			fmt.Fprintf(w, body)
 		}),
@@ -95,10 +96,10 @@ var Preview = mux.Method{
 	}),
 }
 
-func Feed(db database.Db) http.Handler {
+func Feed(conf *Conf, db database.Db) http.Handler {
 	return mux.Method{
 		"GET": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			body := views.Feed.Render(ctx(db, r, false))
+			body := views.Feed.Render(ctx(conf, db, r, false))
 
 			w.Header().Add("Content-Type", "application/rss+xml")
 			fmt.Fprintf(w, body)
@@ -107,29 +108,39 @@ func Feed(db database.Db) http.Handler {
 }
 
 func main() {
+	var (
+		settingsPath = flag.String("settings", "./settings.toml", "")
+		port         = flag.String("port", "8080", "")
+		socket       = flag.String("socket", "", "")
+	)
 	flag.Parse()
 
-	if err := config.Parse(*settingsPath); err != nil {
+	var conf *Conf
+	if _, err := toml.DecodeFile(*settingsPath, &conf); err != nil {
 		log.Fatal("toml:", err)
 	}
 
-	db := database.Open(*dbPath, *horizon)
+	db := database.Open(conf.DbPath, conf.Horizon)
 	defer db.Close()
 
 	es := eventsource.New(nil, nil)
 	defer es.Close()
 
-	store := persona.NewStore(*cookieSecret)
-	persona := persona.New(store, *audience, []string{*user})
+	store := uberich.NewStore(conf.Secret)
+	uberich := uberich.NewClient(conf.Uberich.AppName, conf.Uberich.AppURL, conf.Uberich.UberichURL, conf.Uberich.Secret, store)
 
-	http.Handle("/", persona.Switch(List(db, true), List(db, false)))
-	http.Handle("/add", persona.Protect(Add(db, es)))
-	http.Handle("/preview", persona.Protect(Preview))
-	http.Handle("/feed", Feed(db))
+	shield := func(h http.Handler) http.Handler {
+		return uberich.Protect(h, http.NotFoundHandler())
+	}
+
+	http.Handle("/", uberich.Protect(List(conf, db, true), List(conf, db, false)))
+	http.Handle("/add", shield(Add(conf, db, es)))
+	http.Handle("/preview", shield(Preview))
+	http.Handle("/feed", Feed(conf, db))
 	http.Handle("/connect", es)
 
-	http.Handle("/sign-in", mux.Method{"POST": persona.SignIn})
-	http.Handle("/sign-out", mux.Method{"GET": persona.SignOut})
+	http.Handle("/sign-in", uberich.SignIn("/"))
+	http.Handle("/sign-out", uberich.SignOut("/"))
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", assets.Server(map[string]string{
 		"jquery.caret.js":        assets.Caret,
