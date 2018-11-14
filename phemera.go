@@ -11,10 +11,10 @@ import (
 	"github.com/antage/eventsource"
 	"hawx.me/code/mux"
 	"hawx.me/code/serve"
-	"hawx.me/code/uberich"
 
 	"hawx.me/code/phemera/assets"
 	database "hawx.me/code/phemera/db"
+	"hawx.me/code/phemera/indieauth"
 	"hawx.me/code/phemera/markdown"
 	"hawx.me/code/phemera/models"
 	"hawx.me/code/phemera/views"
@@ -27,13 +27,6 @@ type Conf struct {
 	Secret      string
 	Horizon     string
 	DbPath      string
-
-	Uberich struct {
-		AppName    string
-		AppURL     string
-		UberichURL string
-		Secret     string
-	}
 }
 
 type Context struct {
@@ -126,21 +119,21 @@ func main() {
 	es := eventsource.New(nil, nil)
 	defer es.Close()
 
-	store := uberich.NewStore(conf.Secret)
-	uberich := uberich.NewClient(conf.Uberich.AppName, conf.Uberich.AppURL, conf.Uberich.UberichURL, conf.Uberich.Secret, store)
+	store := indieauth.NewStore(conf.Secret)
 
 	shield := func(h http.Handler) http.Handler {
-		return uberich.Protect(h, http.NotFoundHandler())
+		return indieauth.Protect(store, h, http.NotFoundHandler())
 	}
 
-	http.Handle("/", uberich.Protect(List(conf, db, true), List(conf, db, false)))
+	http.Handle("/", indieauth.Protect(store, List(conf, db, true), List(conf, db, false)))
 	http.Handle("/add", shield(Add(conf, db, es)))
 	http.Handle("/preview", shield(Preview))
 	http.Handle("/feed", Feed(conf, db))
 	http.Handle("/connect", es)
 
-	http.Handle("/sign-in", uberich.SignIn("/"))
-	http.Handle("/sign-out", uberich.SignOut("/"))
+	http.Handle("/sign-in", indieauth.SignIn())
+	http.Handle("/callback", indieauth.Callback(store))
+	http.Handle("/sign-out", indieauth.SignOut(store, "/"))
 
 	http.Handle("/assets/", http.StripPrefix("/assets/", assets.Server(map[string]string{
 		"jquery.caret.js":        assets.Caret,
