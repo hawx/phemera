@@ -1,13 +1,7 @@
 title = "'phemera"
 description  = "['phemera](https://hawx.me/code/phemera) is an experiment in forgetful blogging."
 url = "http://localhost:8080"
-user = "someone@example.com"
+me = "https://example.com"
 secret = "some-secret-pls-change"
 horizon = "-248400s"
 dbPath = "./phemera-db"
-
-[uberich]
-appName = "phemera"
-appURL = "https://phemera.example.com"
-uberichURL = "https://uberich.example.com"
-secret = "shared app secret"
