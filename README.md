@@ -6,8 +6,7 @@ would you need them?
 
 ``` bash
 $ go get hawx.me/code/phemera
-$ cat > settings.toml
-user = "john@doe.com"
-$ phemera --settings settings.toml
+$ cp settings.toml.dist settings.toml
+$ phemera
 ...
 ```
